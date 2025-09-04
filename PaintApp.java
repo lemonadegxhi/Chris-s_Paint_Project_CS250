@@ -29,26 +29,6 @@ public class PaintApp {
         JMenuItem saveAsItem = new JMenuItem("Save As");
         JMenuItem closeItem = new JMenuItem("Close");
 
-
-
-        //Makey Openy - SIKE ACTUALLY SUCKED AND ONLY HALF WORKEY
-        /*openItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser chooser = new JFileChooser();
-                int result = chooser.showOpenDialog(frame);
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    File file = chooser.getSelectedFile();
-                    ImageIcon icon = new ImageIcon(file.getAbsolutePath());
-
-                    //If image is to large
-                    Image scaled = icon.getImage().getScaledInstance(-1, 400, Image.SCALE_SMOOTH);
-                    imageLabel.setIcon(new ImageIcon(scaled));
-                    imageLabel.setText(null);
-                }
-            }
-        });*/
-
-
     openItem.addActionListener(e -> openImage());
     saveItem.addActionListener(e -> saveImage(false));
     saveAsItem.addActionListener(e -> saveImage(true));

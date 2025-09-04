@@ -48,7 +48,7 @@ public class DrawingPanel extends JPanel {
     private void ensureImageExists() {
         if (image == null) {
             //creating a blank canvas here
-            image = new BufferedImage(800, 600, BufferedImage.TYPE_INT_ARGB);
+            image = new BufferedImage(1440, 1920, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2 = image.createGraphics();
             g2.setColor(Color.WHITE);
             g2.fillRect(0, 0, image.getWidth(), image.getHeight());
@@ -92,6 +92,6 @@ public class DrawingPanel extends JPanel {
         if (image != null) {
             return new Dimension(image.getWidth(), image.getHeight());
         }
-        return new Dimension(800, 600);
+        return new Dimension(1440, 1920);
     }
 }
