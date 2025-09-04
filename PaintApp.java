@@ -17,6 +17,10 @@ public class PaintApp {
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        imageLabel = new JLabel("", SwingConstants.CENTER);
+        JScrollPane scrollPane = new JScrollPane(imageLabel);
+        frame.add(scrollPane, BorderLayout.CENTER);
+
         //MENU RIGHT HEREEEEEEEE
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu("File");
@@ -25,8 +29,7 @@ public class PaintApp {
         JMenuItem saveAsItem = new JMenuItem("Save As");
         JMenuItem closeItem = new JMenuItem("Close");
 
-        //testing if this works
-        
+
 
         //Makey Openy - SIKE ACTUALLY SUCKED AND ONLY HALF WORKEY
         /*openItem.addActionListener(new ActionListener() {
