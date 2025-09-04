@@ -25,6 +25,8 @@ public class PaintApp {
         JMenuItem saveAsItem = new JMenuItem("Save As");
         JMenuItem closeItem = new JMenuItem("Close");
 
+        //testing if this works
+        
 
         //Makey Openy - SIKE ACTUALLY SUCKED AND ONLY HALF WORKEY
         /*openItem.addActionListener(new ActionListener() {
