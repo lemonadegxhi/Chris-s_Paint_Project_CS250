@@ -7,7 +7,7 @@ import javax.imageio.ImageIO;
 
 public class PaintApp {
     private JFrame frame;
-    private JLabel imageLabel;
+    private DrawingPanel drawingPanel;
     private BufferedImage currentImage;
     private File currentFile;
 
@@ -17,8 +17,8 @@ public class PaintApp {
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        imageLabel = new JLabel("", SwingConstants.CENTER);
-        JScrollPane scrollPane = new JScrollPane(imageLabel);
+        drawingPanel = new DrawingPanel();
+        JScrollPane scrollPane = new JScrollPane(drawingPanel);
         frame.add(scrollPane, BorderLayout.CENTER);
 
         //MENU RIGHT HEREEEEEEEE
@@ -78,9 +78,7 @@ public class PaintApp {
                 currentImage = ImageIO.read(currentFile); //loading it into the memory here
 
                 if (currentImage != null) {
-                    Image scaled = currentImage.getScaledInstance(-1, 400, Image.SCALE_SMOOTH);
-                    imageLabel.setIcon(new ImageIcon(scaled));
-                    imageLabel.setText(null);
+                    drawingPanel.setImage(currentImage);
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(frame, "Failed to Open Image: " + ex.getMessage());
