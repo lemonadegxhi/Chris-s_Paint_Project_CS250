@@ -5,9 +5,11 @@ import java.awt.image.BufferedImage;
 
 public class DrawingPanel extends JPanel {
     private BufferedImage image;
-    private int startX, startY, endX, endY;
     private int lastX, lastY;
     private boolean drawing;
+
+    private Color brushColor = Color.RED;
+    private int brushSize = 3;
 
     public DrawingPanel() {
         setBackground(Color.WHITE);
@@ -64,10 +66,18 @@ public class DrawingPanel extends JPanel {
 
     private void drawLineOnImage(int x1, int y1, int x2, int y2) {
         Graphics2D g2 = image.createGraphics();
-        g2.setColor(Color.RED);
-        g2.setStroke(new BasicStroke());
+        g2.setColor(brushColor);
+        g2.setStroke(new BasicStroke(brushSize, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g2.drawLine(x1, y1, x2, y2);
         g2.dispose();
+    }
+
+    public void setBrushColor(Color color) {
+        this.brushColor = color;
+    }
+
+    public void setBrushSize(int size) {
+        this.brushSize = size;
     }
 
     @Override

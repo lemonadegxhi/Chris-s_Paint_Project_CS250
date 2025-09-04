@@ -65,6 +65,41 @@ public class PaintApp {
         menuBar.add(fileMenu);
         frame.setJMenuBar(menuBar);
 
+        //Edit Menu
+        JMenu editMenu = new JMenu("Edit");
+        JMenuItem colorItem = new JMenuItem("Line Color");
+        JMenuItem sizeItem = new JMenuItem("Line Width");
+
+        colorItem.addActionListener(e -> {
+            Color newColor = JColorChooser.showDialog(frame, "Pick Line", Color.RED);
+            if (newColor != null) {
+                drawingPanel.setBrushColor(newColor);
+            }
+        });
+
+        sizeItem.addActionListener(e -> {
+            String input = JOptionPane.showInputDialog(frame, "Enter line width (1-20):", "3");
+            if (input != null) {
+                try {
+                    int size = Integer.parseInt(input);
+                    if (size >0 && size <= 20) {
+                        drawingPanel.setBrushSize(size);
+                    } else {
+                        JOptionPane.showMessageDialog(frame, "Width must be between 1 and 20");
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(frame, "Invalid Number");
+                }
+            }
+        });
+
+        editMenu.add(colorItem);
+        editMenu.add(sizeItem);
+
+        menuBar.add(fileMenu);
+        menuBar.add(editMenu);
+        frame.setJMenuBar(menuBar);
+
     }
 
     //THIS NOW MAKEY OPEY AND SAY IT OPEY
@@ -94,6 +129,7 @@ public class PaintApp {
         }
         try {
             File file = currentFile;
+            String format = "png"; //setting png as default format
 
             if (saveAs || file == null) {
                 JFileChooser chooser = new JFileChooser();
@@ -105,13 +141,21 @@ public class PaintApp {
                 }
 
                 file = chooser.getSelectedFile();
-                String filename = file.getAbsolutePath();
-                if (!filename.toLowerCase().endsWith(".png")) {
+                String filename = file.getAbsolutePath().toLowerCase();
+
+                if (filename.endsWith(".jpg") || filename.endsWith(".jpeg")) {
+                    format = "jpg";
+                } else if (filename.endsWith(".bmp")) {
+                    format = "bmp";
+                } else if (filename.endsWith(".png")) {
+                    format = "png";
+                } else { //defaulting to png if nothing saved
                     file = new File(filename + ".png");
+                    format = "png";
                 }
                 currentFile = file;
             }
-            ImageIO.write(drawingPanel.getImage(), "png", file);
+            ImageIO.write(drawingPanel.getImage(), format, file);
             JOptionPane.showMessageDialog(frame, "Image saved to" + file.getAbsolutePath());
 
         } catch (Exception ex) {
