@@ -88,8 +88,8 @@ public class PaintApp {
 
     //THIS ABOUT KILLED ME, GAHHHHHHHHHHHHHh
     private void saveImage(boolean saveAs) {
-        if (currentImage == null) {
-            JOptionPane.showMessageDialog(frame, "No image loaded to save!");
+        if (drawingPanel.getImage() == null) {
+            JOptionPane.showMessageDialog(frame, "Nothing to save!");
             return;
         }
         try {
@@ -111,7 +111,7 @@ public class PaintApp {
                 }
                 currentFile = file;
             }
-            ImageIO.write(currentImage, "png", file);
+            ImageIO.write(drawingPanel.getImage(), "png", file);
             JOptionPane.showMessageDialog(frame, "Image saved to" + file.getAbsolutePath());
 
         } catch (Exception ex) {

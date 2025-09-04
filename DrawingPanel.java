@@ -6,6 +6,7 @@ import java.awt.image.BufferedImage;
 public class DrawingPanel extends JPanel {
     private BufferedImage image;
     private int startX, startY, endX, endY;
+    private int lastX, lastY;
     private boolean drawing;
 
     public DrawingPanel() {
@@ -14,37 +15,43 @@ public class DrawingPanel extends JPanel {
         MouseAdapter mouseHandler = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                if (image == null) return;
-                startX = e.getX();
-                startY = e.getY();
-                endX = startX;
-                endY = startY;
+                ensureImageExists();
+                lastX = e.getX();
+                lastY = e.getY();
                 drawing = true;
             }
 
             @Override
             public void mouseDragged(MouseEvent e) {
-                if(drawing) {
-                    endX = e.getX();
-                    endY = e.getY();
+                if(drawing && image != null) {
+                    int x = e.getX();
+                    int y = e.getY();
+                    drawLineOnImage(lastX, lastY, x, y);
+                    lastX = x;
+                    lastY = y;
                     repaint();
                 }
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (drawing) {
-                    endX = e.getX();
-                    endY = e.getY();
-                    drawLineOnImage();
-                    drawing = false;
-                    repaint();
-                }
+                drawing = false;
             }
         };
 
         addMouseListener(mouseHandler);
         addMouseMotionListener(mouseHandler);
+    }
+
+    private void ensureImageExists() {
+        if (image == null) {
+            //creating a blank canvas here
+            image = new BufferedImage(800, 600, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2 = image.createGraphics();
+            g2.setColor(Color.WHITE);
+            g2.fillRect(0, 0, image.getWidth(), image.getHeight());
+            g2.dispose();
+        }
     }
     public void setImage(BufferedImage img) {
         this.image = img;
@@ -55,14 +62,12 @@ public class DrawingPanel extends JPanel {
         return image;
     }
 
-    private void drawLineOnImage() {
-        if (image != null) {
-            Graphics2D g2 = image.createGraphics();
-            g2.setColor(Color.RED);
-            g2.setStroke(new BasicStroke(3));
-            g2.drawLine(startX, startY, endX, endY);
-            g2.dispose();
-        }
+    private void drawLineOnImage(int x1, int y1, int x2, int y2) {
+        Graphics2D g2 = image.createGraphics();
+        g2.setColor(Color.RED);
+        g2.setStroke(new BasicStroke());
+        g2.drawLine(x1, y1, x2, y2);
+        g2.dispose();
     }
 
     @Override
@@ -71,17 +76,12 @@ public class DrawingPanel extends JPanel {
         if (image != null) {
             g.drawImage(image, 0, 0, this);
         }
-        if(drawing) {
-            g.setColor(Color.RED);
-            ((Graphics2D)g).setStroke(new BasicStroke(2));
-            g.drawLine(startX, startY, endX, endY);
-        }
     }
     @Override
     public Dimension getPreferredSize() {
         if (image != null) {
             return new Dimension(image.getWidth(), image.getHeight());
         }
-        return super.getPreferredSize();
+        return new Dimension(800, 600);
     }
 }
