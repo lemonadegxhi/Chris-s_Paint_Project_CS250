@@ -48,11 +48,7 @@ public class DrawingPanel extends JPanel {
     private void ensureImageExists() {
         if (image == null) {
             //creating a blank canvas here
-            image = new BufferedImage(1440, 1920, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g2 = image.createGraphics();
-            g2.setColor(Color.WHITE);
-            g2.fillRect(0, 0, image.getWidth(), image.getHeight());
-            g2.dispose();
+            resizeCanvas (1440, 1920);
         }
     }
     public void setImage(BufferedImage img) {
@@ -80,6 +76,21 @@ public class DrawingPanel extends JPanel {
         this.brushSize = size;
     }
 
+    public void resizeCanvas(int width, int height) {
+        BufferedImage newImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = newImage.createGraphics();
+        g2.setColor(Color.WHITE);
+        g2.fillRect(0, 0, width, height);
+
+        if (image != null) {
+            g2.drawImage(image, 0, 0, null);
+        }
+        g2.dispose();
+        image = newImage;
+        revalidate();
+        repaint();
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -87,6 +98,8 @@ public class DrawingPanel extends JPanel {
             g.drawImage(image, 0, 0, this);
         }
     }
+
+
     @Override
     public Dimension getPreferredSize() {
         if (image != null) {

@@ -48,7 +48,8 @@ public class PaintApp {
         //Edit Menu
         JMenu editMenu = new JMenu("Edit");
         JMenuItem colorItem = new JMenuItem("Line Color");
-        JMenuItem sizeItem = new JMenuItem("Line Width");
+        //JMenuItem sizeItem = new JMenuItem("Line Width");
+        JMenuItem resizeCanvasItem = new JMenuItem("Resize Canvas");
 
         colorItem.addActionListener(e -> {
             Color newColor = JColorChooser.showDialog(frame, "Pick Line", Color.RED);
@@ -57,24 +58,51 @@ public class PaintApp {
             }
         });
 
-        sizeItem.addActionListener(e -> {
-            String input = JOptionPane.showInputDialog(frame, "Enter line width (1-20):", "3");
-            if (input != null) {
+        resizeCanvasItem.addActionListener(e -> {
+            JTextField heightField = new JTextField("");
+            JTextField widthField = new JTextField("");
+            JPanel panel = new JPanel(new GridLayout(2, 2));
+            panel.add(new JLabel( "Height:"));
+            panel.add(heightField);
+            panel.add(new JLabel("Width:"));
+            panel.add(widthField);
+
+            int result = JOptionPane.showConfirmDialog(frame, panel, "Resize Canvas", JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.OK_OPTION) {
                 try {
-                    int size = Integer.parseInt(input);
-                    if (size >0 && size <= 20) {
-                        drawingPanel.setBrushSize(size);
-                    } else {
-                        JOptionPane.showMessageDialog(frame, "Width must be between 1 and 20");
-                    }
+                    int w = Integer.parseInt(widthField.getText());
+                    int h = Integer.parseInt(heightField.getText());
+                    drawingPanel.resizeCanvas(w, h);
                 } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(frame, "Invalid Number");
+                    JOptionPane.showMessageDialog(frame, "Invalid size input!");
                 }
             }
         });
 
+        JSlider sizeItem = new JSlider(1, 50, 3);
+        sizeItem.setMajorTickSpacing(10);
+        sizeItem.setMinorTickSpacing(1);
+        sizeItem.setPaintTicks(true);
+        sizeItem.setPaintLabels(true);
+
+        sizeItem.addChangeListener (e -> {
+            int size = sizeItem.getValue();
+            drawingPanel.setBrushSize(size);
+        });
+
+        JPanel sliderPanel = new JPanel();
+        sliderPanel.add(new JLabel("Line Width:"));
+        sliderPanel.add(sizeItem);
+
+        JMenuItem sliderItem = new JMenuItem("Adjust Line Width");
+        sliderItem.addActionListener(e -> {
+            JOptionPane.showMessageDialog(frame, sliderPanel, "Brush Size", JOptionPane.PLAIN_MESSAGE);
+        });
+
         editMenu.add(colorItem);
-        editMenu.add(sizeItem);
+        //editMenu.add(sizeItem);
+        editMenu.add(sliderItem);
+        editMenu.add(resizeCanvasItem);
 
         menuBar.add(fileMenu);
         menuBar.add(editMenu);
