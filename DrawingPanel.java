@@ -7,11 +7,13 @@ public class DrawingPanel extends JPanel {
     private BufferedImage image;
     private int lastX, lastY;
     private boolean drawing;
+    private Runnable onChange;
 
     private Color brushColor = Color.RED;
     private int brushSize = 3;
 
-    public DrawingPanel() {
+    public DrawingPanel(Runnable onChange) {
+        this.onChange = onChange;
         setBackground(Color.WHITE);
 
         MouseAdapter mouseHandler = new MouseAdapter() {
@@ -32,6 +34,7 @@ public class DrawingPanel extends JPanel {
                     lastX = x;
                     lastY = y;
                     repaint();
+                    if (onChange != null) onChange.run();
                 }
             }
 
@@ -49,6 +52,7 @@ public class DrawingPanel extends JPanel {
         if (image == null) {
             //creating a blank canvas here
             resizeCanvas (1440, 1920);
+            if (onChange != null) onChange.run();
         }
     }
     public void setImage(BufferedImage img) {

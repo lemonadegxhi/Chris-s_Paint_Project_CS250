@@ -10,14 +10,21 @@ public class PaintApp {
     private DrawingPanel drawingPanel;
     private BufferedImage currentImage;
     private File currentFile;
+    private boolean isDirty = false; //looking for unsaved changes.
 
     public PaintApp() {
         frame = new JFrame("Chris' Magical Paint");
         frame.setSize(600, 400);
 
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                attemptExit();
+            }
+        });
 
-        drawingPanel = new DrawingPanel();
+        drawingPanel = new DrawingPanel(() -> setDirty(true));
         JScrollPane scrollPane = new JScrollPane(drawingPanel);
         frame.add(scrollPane, BorderLayout.CENTER);
 
@@ -104,10 +111,55 @@ public class PaintApp {
         editMenu.add(sliderItem);
         editMenu.add(resizeCanvasItem);
 
+
+        //Adding a help menu
+        JMenu helpMenu = new JMenu("Help");
+        JMenuItem helpItem = new JMenuItem("Help");
+        JMenuItem aboutItem = new JMenuItem("About");
+
+        helpItem.addActionListener(e -> {
+            JOptionPane.showMessageDialog(frame,
+                    "Chris' Magical Paint:\n\n" +
+                    "- Use the mouse to draw on the canvas.\n" +
+                    "- File > Open to load an image.\n" +
+                    "- File > Save/Save As to save your work. \n" +
+                    "- Edit > Line Color to change brush color.\n" +
+                    "- Edit > Adjust Line Width to change brush size.\n" +
+                    "- Edit > Resize Canvas to change canvas size for larger paintings. \n",
+                    "Help", JOptionPane.INFORMATION_MESSAGE);
+        });
+
+        aboutItem.addActionListener(e -> showAboutDialog());
+
+        helpMenu.add(helpItem);
+        helpMenu.add(aboutItem);
+
+        menuBar.add(helpMenu);
         menuBar.add(fileMenu);
         menuBar.add(editMenu);
         frame.setJMenuBar(menuBar);
 
+    }
+
+    private void attemptExit() {
+        if (isDirty) {
+            int choice = JOptionPane.showConfirmDialog(
+                    frame,
+                    "YOUR ABOUT TO CLOSE WITHOUT SAVEING. SAVE???" +
+                    JOptionPane.YES_NO_CANCEL_OPTION);
+            if (choice == JOptionPane.CANCEL_OPTION) {
+                return;
+            } else if (choice == JOptionPane.YES_OPTION) {
+                saveImage(false);
+            }
+        }
+        frame.dispose();
+    }
+
+    private void setDirty(boolean dirty) {
+        isDirty = dirty;
+        String title = "Chris' Magical Paint" + (dirty ? " *" : "");
+        frame.setTitle(title);
     }
 
     //THIS NOW MAKEY OPEY AND SAY IT OPEY
@@ -169,6 +221,33 @@ public class PaintApp {
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(frame, "Failed to save image: " + ex.getMessage());
         }
+    }
+
+    private void showAboutDialog() {
+        JDialog aboutDialog = new JDialog(frame, "About", true);
+        aboutDialog.setSize(300, 200);
+        aboutDialog.setLayout(new BorderLayout());
+
+        JTextArea textArea = new JTextArea(
+                "Chris' Magical Paint\n\n" +
+                        "Version: 1.2.9\n" +
+                        "Author: Lemonadegxhi\n" +
+                        "Recreation of Microsoft Pain made with Java Swing.");
+        textArea.setEditable(false);
+        textArea.setBackground(null);
+        textArea.setFont(new Font("Arial", Font.PLAIN, 14));
+        textArea.setMargin(new Insets(10, 10, 10, 10));
+
+        aboutDialog.add(textArea, BorderLayout.CENTER);
+
+        JButton okButton = new JButton("OK");
+        okButton.addActionListener(e -> aboutDialog.dispose());
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(okButton);
+
+        aboutDialog.add(buttonPanel, BorderLayout.SOUTH);
+        aboutDialog.setLocationRelativeTo(frame);
+        aboutDialog.setVisible(true);
     }
 
     public void showApp() {
