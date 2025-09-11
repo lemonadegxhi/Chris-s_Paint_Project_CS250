@@ -5,11 +5,14 @@ import java.awt.image.BufferedImage;
 
 public class DrawingPanel extends JPanel {
     private BufferedImage image;
-    private int lastX, lastY;
+    private int startX, startY, lastX, lastY;
     private boolean drawing;
     private Runnable onChange;
 
-    private Color brushColor = Color.RED;
+    private DrawingTool currentTool = DrawingTool.PENCIL;
+    private ToolOptions toolOptions = new ToolOptions();
+
+    private Color brushColor = Color.BLACK;
     private int brushSize = 3;
 
     public DrawingPanel(Runnable onChange) {
@@ -20,14 +23,20 @@ public class DrawingPanel extends JPanel {
             @Override
             public void mousePressed(MouseEvent e) {
                 ensureImageExists();
-                lastX = e.getX();
-                lastY = e.getY();
+                startX = e.getX();
+                startY = e.getY();
+
+                if (currentTool == DrawingTool.EYEDROPPER && image != null) {
+                    int rgb = image.getRGB(startX, startY);
+                    toolOptions.setColor(new Color(rgb, true));
+                    return;
+                }
                 drawing = true;
             }
 
             @Override
             public void mouseDragged(MouseEvent e) {
-                if(drawing && image != null) {
+                if(drawing && image != null && currentTool == DrawingTool.PENCIL) {
                     int x = e.getX();
                     int y = e.getY();
                     drawLineOnImage(lastX, lastY, x, y);
@@ -40,12 +49,44 @@ public class DrawingPanel extends JPanel {
 
             @Override
             public void mouseReleased(MouseEvent e) {
+                if (drawing && image != null) {
+                    if (currentTool == DrawingTool.SHAPE) {
+                        Graphics2D g2 = image.createGraphics();
+                        g2.setColor(toolOptions.getColor());
+                        g2.setStroke(toolOptions.getStroke());
+
+                        ShapeDrawer.drawShape(g2, toolOptions.getShapeType(), startX, startY, e.getX(), e.getY());
+                        g2.dispose();
+                        repaint();
+                        if (onChange != null) onChange.run();
+                    }
+                }
                 drawing = false;
             }
         };
 
         addMouseListener(mouseHandler);
         addMouseMotionListener(mouseHandler);
+    }
+
+    private void drawLineOnImage(int x1, int y1, int x2, int y2) {
+        Graphics2D g2 = image.createGraphics();
+        g2.setColor(toolOptions.getColor());
+        g2.setStroke(toolOptions.getStroke());
+        g2.drawLine(x1, y1, x2, y2);
+        g2.dispose();
+    }
+
+    public void setTool(DrawingTool tool) {
+        this.currentTool = tool;
+    }
+
+    public void setShapeType(ShapeType type) {
+        this.toolOptions.setShapeType(type);
+    }
+
+    public void setDashed(boolean dashed) {
+        this.toolOptions.setDashed(dashed);
     }
 
     private void ensureImageExists() {
@@ -64,13 +105,13 @@ public class DrawingPanel extends JPanel {
         return image;
     }
 
-    private void drawLineOnImage(int x1, int y1, int x2, int y2) {
+    /*private void drawLineOnImage(int x1, int y1, int x2, int y2) {
         Graphics2D g2 = image.createGraphics();
         g2.setColor(brushColor);
         g2.setStroke(new BasicStroke(brushSize, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g2.drawLine(x1, y1, x2, y2);
         g2.dispose();
-    }
+    }*/
 
     public void setBrushColor(Color color) {
         this.brushColor = color;

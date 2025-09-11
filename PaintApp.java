@@ -53,7 +53,7 @@ public class PaintApp {
         frame.setJMenuBar(menuBar);
 
         //Edit Menu
-        JMenu editMenu = new JMenu("Edit");
+        JMenu toolMenu = new JMenu("Tools");
         JMenuItem colorItem = new JMenuItem("Line Color");
         //JMenuItem sizeItem = new JMenuItem("Line Width");
         JMenuItem resizeCanvasItem = new JMenuItem("Resize Canvas");
@@ -106,10 +106,31 @@ public class PaintApp {
             JOptionPane.showMessageDialog(frame, sliderPanel, "Brush Size", JOptionPane.PLAIN_MESSAGE);
         });
 
-        editMenu.add(colorItem);
+        JMenu shapeMenu = new JMenu("Shapes");
+        for (ShapeType type : ShapeType.values()) {
+            JMenuItem shapeItem = new JMenuItem(type.name());
+            shapeItem.addActionListener(e -> {
+                drawingPanel.setTool(DrawingTool.SHAPE);
+                drawingPanel.setShapeType(type);
+            });
+            shapeMenu.add(shapeItem);
+        }
+
+        JMenuItem eyedropperItem = new JMenuItem("Eyedropper");
+        eyedropperItem.addActionListener(e -> drawingPanel.setTool(DrawingTool.EYEDROPPER));
+
+        JCheckBoxMenuItem dashedItem = new JCheckBoxMenuItem("Dasehd Line");
+        dashedItem.addActionListener(e -> drawingPanel.setDashed(dashedItem.isSelected()));
+
+
+        toolMenu.add(colorItem);
         //editMenu.add(sizeItem);
-        editMenu.add(sliderItem);
-        editMenu.add(resizeCanvasItem);
+        toolMenu.add(eyedropperItem);
+        toolMenu.add(shapeMenu);
+        toolMenu.add(sliderItem);
+        toolMenu.add(dashedItem);
+        toolMenu.add(resizeCanvasItem);
+
 
 
         //Adding a help menu
@@ -134,9 +155,9 @@ public class PaintApp {
         helpMenu.add(helpItem);
         helpMenu.add(aboutItem);
 
-        menuBar.add(helpMenu);
         menuBar.add(fileMenu);
-        menuBar.add(editMenu);
+        menuBar.add(toolMenu);
+        menuBar.add(helpMenu);
         frame.setJMenuBar(menuBar);
 
     }
@@ -230,9 +251,9 @@ public class PaintApp {
 
         JTextArea textArea = new JTextArea(
                 "Chris' Magical Paint\n\n" +
-                        "Version: 1.2.9\n" +
+                        "Version: 1.3.1\n" +
                         "Author: Lemonadegxhi\n" +
-                        "Recreation of Microsoft Pain made with Java Swing.");
+                        "Recreation of Microsoft Pain.");
         textArea.setEditable(false);
         textArea.setBackground(null);
         textArea.setFont(new Font("Arial", Font.PLAIN, 14));
