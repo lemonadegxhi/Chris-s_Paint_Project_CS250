@@ -40,10 +40,15 @@ public class DrawingPanel extends JPanel {
 
             @Override
             public void mouseDragged(MouseEvent e) {
-                if(drawing && image != null && currentTool == DrawingTool.PENCIL) {
+                if(drawing && image != null) {
                     int x = e.getX();
                     int y = e.getY();
-                    drawLineOnImage(lastX, lastY, x, y);
+
+                    if (currentTool == DrawingTool.PENCIL || currentTool == DrawingTool.DRAW) {
+                        drawLineOnImage(lastX, lastY, x, y, toolOptions.getColor());
+                    } else if (currentTool == DrawingTool.ERASER) {
+                        drawLineOnImage(lastX, lastY, x, y, Color.WHITE);
+                    }
                     lastX = x;
                     lastY = y;
                     repaint();
@@ -73,9 +78,9 @@ public class DrawingPanel extends JPanel {
         addMouseMotionListener(mouseHandler);
     }
 
-    private void drawLineOnImage(int x1, int y1, int x2, int y2) {
+    private void drawLineOnImage(int x1, int y1, int x2, int y2, Color c) {
         Graphics2D g2 = image.createGraphics();
-        g2.setColor(toolOptions.getColor());
+        g2.setColor(c);
         g2.setStroke(toolOptions.getStroke());
         g2.drawLine(x1, y1, x2, y2);
         g2.dispose();

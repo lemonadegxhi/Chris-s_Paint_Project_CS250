@@ -1,5 +1,7 @@
 public enum DrawingTool {
     PENCIL,
     EYEDROPPER,
-    SHAPE
+    SHAPE,
+    DRAW,
+    ERASER
 }

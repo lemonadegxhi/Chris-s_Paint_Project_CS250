@@ -92,6 +92,13 @@ public class PaintApp {
         sizeItem.setPaintTicks(true);
         sizeItem.setPaintLabels(true);
 
+        sizeItem.addChangeListener(e -> {
+            int size = sizeItem.getValue();
+            drawingPanel.setBrushSize(size);
+        });
+
+        drawingPanel.setBrushSize(sizeItem.getValue());
+
         JPanel sliderPanel = new JPanel();
         sliderPanel.add(new JLabel("Line Width:"));
         sliderPanel.add(sizeItem);
@@ -117,10 +124,18 @@ public class PaintApp {
         JCheckBoxMenuItem dashedItem = new JCheckBoxMenuItem("Dashed Line");
         dashedItem.addActionListener(e -> drawingPanel.setDashed(dashedItem.isSelected()));
 
+        JMenuItem drawItem = new JMenuItem("Draw");
+        drawItem.addActionListener(e -> drawingPanel.setTool(DrawingTool.DRAW));
+
+        JMenuItem eraserItem = new JMenuItem("Eraser");
+        eraserItem.addActionListener(e -> drawingPanel.setTool(DrawingTool.ERASER));
+
 
         toolMenu.add(colorItem);
         //editMenu.add(sizeItem);
         toolMenu.add(eyedropperItem);
+        toolMenu.add(drawItem);
+        toolMenu.add(eraserItem);
         toolMenu.add(shapeMenu);
         toolMenu.add(sliderItem);
         toolMenu.add(dashedItem);
@@ -245,7 +260,7 @@ public class PaintApp {
 
         JTextArea textArea = new JTextArea(
                 "Chris' Magical Paint\n\n" +
-                        "Version: 1.3.1\n" +
+                        "Version: 1.3.3\n" +
                         "Author: Lemonadegxhi\n" +
                         "Recreation of Microsoft Pain.");
         textArea.setEditable(false);
