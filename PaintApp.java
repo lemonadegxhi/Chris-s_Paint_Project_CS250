@@ -5,6 +5,13 @@ import java.awt.event.*;
 import java.io.File;
 import javax.imageio.ImageIO;
 
+/**
+ * Main Application class
+ * <p>
+ *     Handles the window, menus, tool options, saving/loading iamges,
+ *     and integrates the DrawingPanel for canvas drawing.
+ */
+
 public class PaintApp {
     private JFrame frame;
     private DrawingPanel drawingPanel;
@@ -12,6 +19,9 @@ public class PaintApp {
     private File currentFile;
     private boolean isDirty = false; //looking for unsaved changes.
 
+    /**
+     * Construcs the PaintApp and initializes the window, menus, and tools.
+     */
     public PaintApp() {
         frame = new JFrame("Chris' Magical Paint");
         frame.setSize(600, 400);
