@@ -132,7 +132,6 @@ public class PaintApp {
 
 
         toolMenu.add(colorItem);
-        //editMenu.add(sizeItem);
         toolMenu.add(eyedropperItem);
         toolMenu.add(drawItem);
         toolMenu.add(eraserItem);
