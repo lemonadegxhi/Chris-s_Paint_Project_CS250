@@ -19,8 +19,15 @@ public class ToolOptions {
 
     public Stroke getStroke() {
         if (dashed) {
-            return new BasicStroke(size, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
-                    10, new float[]{10}, 0);
+            float dashLength = size * 2.5f;
+            return new BasicStroke(
+                    size,
+                    BasicStroke.CAP_BUTT,
+                    BasicStroke.JOIN_MITER,
+                    10,
+                    new float[]{dashLength, dashLength},
+                    0
+            );
         }
         return new BasicStroke(size, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
     }

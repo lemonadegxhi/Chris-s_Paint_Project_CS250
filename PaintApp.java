@@ -33,7 +33,11 @@ public class PaintApp {
         JMenu fileMenu = new JMenu("File");
         JMenuItem openItem = new JMenuItem("Open Image");
         JMenuItem saveItem = new JMenuItem("Save");
+        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
+        saveItem.addActionListener(e -> saveImage(false));
         JMenuItem saveAsItem = new JMenuItem("Save As");
+        saveAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+        saveAsItem.addActionListener(e -> saveImage(true));
         JMenuItem closeItem = new JMenuItem("Close");
 
     openItem.addActionListener(e -> openImage());
@@ -259,7 +263,7 @@ public class PaintApp {
 
         JTextArea textArea = new JTextArea(
                 "Chris' Magical Paint\n\n" +
-                        "Version: 1.3.3\n" +
+                        "Version: 1.3.5\n" +
                         "Author: Lemonadegxhi\n" +
                         "Recreation of Microsoft Pain.");
         textArea.setEditable(false);
