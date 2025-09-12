@@ -25,10 +25,14 @@ public class DrawingPanel extends JPanel {
                 ensureImageExists();
                 startX = e.getX();
                 startY = e.getY();
+                lastX = startX;
+                lastY = startY;
 
                 if (currentTool == DrawingTool.EYEDROPPER && image != null) {
                     int rgb = image.getRGB(startX, startY);
-                    toolOptions.setColor(new Color(rgb, true));
+                    Color picked = new Color(rgb, true);
+                    toolOptions.setColor(picked);
+                    setBrushColor(picked);
                     return;
                 }
                 drawing = true;
@@ -77,6 +81,9 @@ public class DrawingPanel extends JPanel {
         g2.dispose();
     }
 
+    public void setBrushSize(int size) {
+        this.toolOptions.setSize(size);
+    }
     public void setTool(DrawingTool tool) {
         this.currentTool = tool;
     }
@@ -92,7 +99,7 @@ public class DrawingPanel extends JPanel {
     private void ensureImageExists() {
         if (image == null) {
             //creating a blank canvas here
-            resizeCanvas (1440, 1920);
+            resizeCanvas (800, 600);
             if (onChange != null) onChange.run();
         }
     }
@@ -115,10 +122,7 @@ public class DrawingPanel extends JPanel {
 
     public void setBrushColor(Color color) {
         this.brushColor = color;
-    }
-
-    public void setBrushSize(int size) {
-        this.brushSize = size;
+        this.toolOptions.setColor(color);
     }
 
     public void resizeCanvas(int width, int height) {

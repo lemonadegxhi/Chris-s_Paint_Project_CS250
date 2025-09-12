@@ -92,11 +92,6 @@ public class PaintApp {
         sizeItem.setPaintTicks(true);
         sizeItem.setPaintLabels(true);
 
-        sizeItem.addChangeListener (e -> {
-            int size = sizeItem.getValue();
-            drawingPanel.setBrushSize(size);
-        });
-
         JPanel sliderPanel = new JPanel();
         sliderPanel.add(new JLabel("Line Width:"));
         sliderPanel.add(sizeItem);
@@ -119,7 +114,7 @@ public class PaintApp {
         JMenuItem eyedropperItem = new JMenuItem("Eyedropper");
         eyedropperItem.addActionListener(e -> drawingPanel.setTool(DrawingTool.EYEDROPPER));
 
-        JCheckBoxMenuItem dashedItem = new JCheckBoxMenuItem("Dasehd Line");
+        JCheckBoxMenuItem dashedItem = new JCheckBoxMenuItem("Dashed Line");
         dashedItem.addActionListener(e -> drawingPanel.setDashed(dashedItem.isSelected()));
 
 
@@ -155,7 +150,6 @@ public class PaintApp {
         helpMenu.add(helpItem);
         helpMenu.add(aboutItem);
 
-        menuBar.add(fileMenu);
         menuBar.add(toolMenu);
         menuBar.add(helpMenu);
         frame.setJMenuBar(menuBar);

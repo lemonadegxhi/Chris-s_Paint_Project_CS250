@@ -10,10 +10,12 @@ public class ToolOptions {
     public void setColor(Color color) {this.color = color; }
 
     public int getSize() {return size;}
+    public void setSize(int size) {this.size = size;}
     public void setDashed(boolean dashed) {this.dashed = dashed; }
 
     public ShapeType getShapeType() {return shapeType;}
     public void setShapeType(ShapeType shapeType) {this.shapeType = shapeType;}
+
 
     public Stroke getStroke() {
         if (dashed) {

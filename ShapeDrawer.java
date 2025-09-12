@@ -19,7 +19,7 @@ public class ShapeDrawer {
 
             case CIRCLE:
                 int diameter = Math.min(w, h);
-                g2.drawOval(startX, startY, w, h);
+                g2.drawOval(startX, startY, diameter, diameter);
                 break;
 
             case ELLIPSE:
