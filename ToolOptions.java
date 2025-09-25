@@ -6,6 +6,10 @@ public class ToolOptions {
     private boolean dashed = false;
     private ShapeType shapeType = ShapeType.RECTANGLE;
 
+    private int polygonSides = 3;
+    public int getPolygonSides() { return polygonSides; }
+    public void setPolygonSides(int sides) { this.polygonSides = Math.max(3, sides);}
+
     //Text
     private String text = "Hello";
     private int textSize = 24;

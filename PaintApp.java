@@ -182,6 +182,12 @@ public class PaintApp {
             shapeItem.addActionListener(e -> {
                 drawingPanel.setTool(DrawingTool.SHAPE);
                 drawingPanel.setShapeType(type);
+                if (type == ShapeType.POLYGON) {
+                    int sides = PolygonShape.askSides();
+                    drawingPanel.getToolOptions().setPolygonSides(sides);
+                }
+                drawingPanel.setTool(DrawingTool.SHAPE);
+                drawingPanel.setShapeType(type);
             });
             shapeMenu.add(shapeItem);
         }

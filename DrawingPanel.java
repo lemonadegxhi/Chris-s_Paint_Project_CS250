@@ -81,11 +81,16 @@ public class DrawingPanel extends JPanel {
                         g2.setColor(toolOptions.getColor());
                         g2.setStroke(toolOptions.getStroke());
 
-                        ShapeDrawer.drawShape(g2, toolOptions.getShapeType(), startX, startY, e.getX(), e.getY());
+                        AdvancedShapeDrawer.drawShape(g2, toolOptions.getShapeType(),
+                                startX, startY, e.getX(), e.getY(),
+                                toolOptions.getPolygonSides());
                         g2.dispose();
                         repaint();
                         if (onChange != null) onChange.run();
                     } else if (currentTool == DrawingTool.TEXT) {
+                        pushStateForUndo();
+                        redoStack.clear();
+
                         Graphics2D g2 = image.createGraphics();
                         g2.setColor(toolOptions.getColor());
                         g2.setFont(new Font("SansSerif", Font.PLAIN, toolOptions.getTextSize()));
