@@ -70,7 +70,61 @@ public class PaintApp {
         JMenu toolMenu = new JMenu("Tools");
         JMenuItem colorItem = new JMenuItem("Line Color");
         //JMenuItem sizeItem = new JMenuItem("Line Width");
+        JMenuItem textItem = new JMenuItem("Text");
+        JMenuItem undoItem = new JMenuItem("Undo");
+        JMenuItem redoItem = new JMenuItem("Redo");
+        JMenuItem clearCanvasItem = new JMenuItem("Clear Canvas");
         JMenuItem resizeCanvasItem = new JMenuItem("Resize Canvas");
+
+        undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK));
+        redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK));
+
+        undoItem.addActionListener(e -> {
+            drawingPanel.undo();
+        });
+
+        redoItem.addActionListener(e -> {
+            drawingPanel.redo();
+        });
+
+        clearCanvasItem.addActionListener(e -> {
+            int choice = JOptionPane.showConfirmDialog(frame,
+                    "Are you sure you want to clear the canvas?",
+                    "Confirm Clear?",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+            if (choice == JOptionPane.YES_OPTION) {
+                drawingPanel.clearCanvas();
+                setDirty(true);
+            }
+        });
+
+        textItem.addActionListener(e -> {
+            JPanel p = new JPanel(new BorderLayout(5, 5));
+            JTextField textField = new JTextField(drawingPanel != null ? "" : "");
+            JPanel inner = new JPanel(new GridLayout(2, 2, 4, 4));
+            inner.add(new JLabel("Text:"));
+            inner.add(textField);
+            inner.add(new JLabel("Size:"));
+            SpinnerNumberModel model = new SpinnerNumberModel(24, 6, 200, 1);
+            JSpinner sizeSpinner = new JSpinner(model);
+            inner.add(sizeSpinner);
+
+            p.add(inner, BorderLayout.CENTER);
+
+            int res = JOptionPane.showConfirmDialog(frame, p, "Insert Text", JOptionPane.OK_CANCEL_OPTION);
+            if (res == JOptionPane.OK_OPTION) {
+                String text = textField.getText();
+                int size = (Integer) sizeSpinner.getValue();
+                if (text == null || text.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(frame, "No text entered.");
+                } else {
+                    drawingPanel.setTool(DrawingTool.TEXT);
+                    drawingPanel.getToolOptions().setText(text);
+                    drawingPanel.getToolOptions().setTextSize(size);
+                }
+            }
+        });
 
         colorItem.addActionListener(e -> {
             Color newColor = JColorChooser.showDialog(frame, "Pick Line", Color.RED);
@@ -153,6 +207,13 @@ public class PaintApp {
         toolMenu.add(sliderItem);
         toolMenu.add(dashedItem);
         toolMenu.add(resizeCanvasItem);
+
+        toolMenu.addSeparator();
+        toolMenu.add(undoItem);
+        toolMenu.add(redoItem);
+        toolMenu.add(clearCanvasItem);
+        toolMenu.addSeparator();
+        toolMenu.add(textItem);
 
 
 

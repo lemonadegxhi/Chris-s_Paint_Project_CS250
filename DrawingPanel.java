@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 public class DrawingPanel extends JPanel {
     private BufferedImage image;
@@ -14,6 +16,15 @@ public class DrawingPanel extends JPanel {
 
     private Color brushColor = Color.BLACK;
     private int brushSize = 3;
+
+    // Undo/Redo part
+    private final Deque<BufferedImage> undoStack = new ArrayDeque<>();
+    private final Deque<BufferedImage> redoStack = new ArrayDeque<>();
+    private final int MAX_HISTORY = 50;
+
+    public ToolOptions getToolOptions() {
+        return this.toolOptions;
+    }
 
     public DrawingPanel(Runnable onChange) {
         this.onChange = onChange;
@@ -29,11 +40,17 @@ public class DrawingPanel extends JPanel {
                 lastY = startY;
 
                 if (currentTool == DrawingTool.EYEDROPPER && image != null) {
-                    int rgb = image.getRGB(startX, startY);
-                    Color picked = new Color(rgb, true);
-                    toolOptions.setColor(picked);
-                    setBrushColor(picked);
+                    if (startX >= 0 && startX < image.getWidth() && startY >= 0 && startY < image.getHeight()) {
+                        int rgb = image.getRGB(startX, startY);
+                        Color picked = new Color(rgb, true);
+                        toolOptions.setColor(picked);
+                        setBrushColor(picked);
+                    }
                     return;
+                }
+                if (willModifyImage(currentTool)) {
+                    pushStateForUndo();
+                    redoStack.clear();
                 }
                 drawing = true;
             }
@@ -68,6 +85,16 @@ public class DrawingPanel extends JPanel {
                         g2.dispose();
                         repaint();
                         if (onChange != null) onChange.run();
+                    } else if (currentTool == DrawingTool.TEXT) {
+                        Graphics2D g2 = image.createGraphics();
+                        g2.setColor(toolOptions.getColor());
+                        g2.setFont(new Font("SansSerif", Font.PLAIN, toolOptions.getTextSize()));
+                        FontMetrics fm = g2.getFontMetrics();
+                        int ascent = fm.getAscent();
+                        g2.drawString(toolOptions.getText(), e.getX(), e.getY() + ascent);
+                        g2.dispose();
+                        repaint();
+                        if (onChange != null) onChange.run();
                     }
                 }
                 drawing = false;
@@ -76,6 +103,11 @@ public class DrawingPanel extends JPanel {
 
         addMouseListener(mouseHandler);
         addMouseMotionListener(mouseHandler);
+    }
+
+    private boolean willModifyImage(DrawingTool t) {
+        return t == DrawingTool.PENCIL || t == DrawingTool.DRAW || t == DrawingTool.ERASER
+                || t == DrawingTool.SHAPE || t == DrawingTool.TEXT;
     }
 
     private void drawLineOnImage(int x1, int y1, int x2, int y2, Color c) {
@@ -109,7 +141,11 @@ public class DrawingPanel extends JPanel {
         }
     }
     public void setImage(BufferedImage img) {
-        this.image = img;
+        if (img == null) return;
+        image = copyImage(img);
+        undoStack.clear();
+        redoStack.clear();
+        pushStateForUndo();
         repaint();
     }
 
@@ -143,6 +179,24 @@ public class DrawingPanel extends JPanel {
         image = newImage;
         revalidate();
         repaint();
+
+        pushStateForUndo();
+        if (onChange != null) onChange.run();
+    }
+
+    public void clearCanvas() {
+        if (image == null) {
+            resizeCanvas(800, 600);
+            return;
+        }
+        pushStateForUndo();
+        Graphics2D g2 = image.createGraphics();
+        g2.setColor(Color.WHITE);
+        g2.fillRect(0, 0, image.getWidth(), image.getHeight());
+        g2.dispose();
+        repaint();
+        if (onChange != null) onChange.run();
+        redoStack.clear();
     }
 
     @Override
@@ -160,5 +214,60 @@ public class DrawingPanel extends JPanel {
             return new Dimension(image.getWidth(), image.getHeight());
         }
         return new Dimension(1440, 1920);
+    }
+
+    // UNDO/REDO
+    private void pushStateForUndo() {
+        if (image == null) return;
+        // push a copy
+        undoStack.push(copyImage(image));
+        //cap history
+        while (undoStack.size() > MAX_HISTORY) {
+            BufferedImage[] tmp = undoStack.toArray(new BufferedImage[0]);
+            undoStack.removeLast();
+        }
+    }
+
+    public boolean canUndo() {
+        return !undoStack.isEmpty();
+    }
+
+    public boolean canRedo() {
+        return !redoStack.isEmpty();
+    }
+
+    public void undo() {
+        if (!canUndo()) return;
+        if (image != null) {
+            redoStack.push(copyImage(image));
+        }
+        BufferedImage prev = undoStack.pop();
+        image = copyImage(prev);
+        repaint();
+        if (onChange != null) onChange.run();
+    }
+
+    public void redo() {
+        if (!canRedo()) return;
+        if (image != null) {
+            undoStack.push(copyImage(image));
+        }
+        BufferedImage next = redoStack.pop();
+        image = copyImage(next);
+        repaint();
+        if (onChange != null) onChange.run();
+    }
+    public void clearHistory() {
+        undoStack.clear();
+        redoStack.clear();
+    }
+
+    private BufferedImage copyImage(BufferedImage src) {
+        if (src == null) return null;
+        BufferedImage copy = new BufferedImage(src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = copy.createGraphics();
+        g.drawImage(src, 0, 0, null);
+        g.dispose();
+        return copy;
     }
 }

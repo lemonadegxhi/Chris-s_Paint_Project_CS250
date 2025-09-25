@@ -6,6 +6,10 @@ public class ToolOptions {
     private boolean dashed = false;
     private ShapeType shapeType = ShapeType.RECTANGLE;
 
+    //Text
+    private String text = "Hello";
+    private int textSize = 24;
+
     public Color getColor() {return color; }
     public void setColor(Color color) {this.color = color; }
 
@@ -16,6 +20,10 @@ public class ToolOptions {
     public ShapeType getShapeType() {return shapeType;}
     public void setShapeType(ShapeType shapeType) {this.shapeType = shapeType;}
 
+    public String getText() { return text; }
+    public void setTextSize(int textSize) {this.textSize = textSize;}
+    public void setText(String text) {this.text = text;}
+    public int getTextSize() { return textSize; }
 
     public Stroke getStroke() {
         if (dashed) {

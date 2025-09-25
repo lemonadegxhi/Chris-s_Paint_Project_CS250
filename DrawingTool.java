@@ -3,5 +3,6 @@ public enum DrawingTool {
     EYEDROPPER,
     SHAPE,
     DRAW,
-    ERASER
+    ERASER,
+    TEXT
 }
