@@ -14,6 +14,10 @@ public class DrawingPanel extends JPanel {
     private DrawingTool currentTool = DrawingTool.PENCIL;
     private ToolOptions toolOptions = new ToolOptions();
 
+    private SelectionTool selectionTool = new SelectionTool();
+    private boolean selecting = false;
+    private boolean pasting = false;
+
     private Color brushColor = Color.BLACK;
     private int brushSize = 3;
 
@@ -52,6 +56,20 @@ public class DrawingPanel extends JPanel {
                     pushStateForUndo();
                     redoStack.clear();
                 }
+                if (currentTool == DrawingTool.SELECT) {
+                    selectionTool.startSelection(e.getX(), e.getY());
+                    selecting = true;
+                    return;
+                }
+                if (currentTool == DrawingTool.PASTE) {
+                    Graphics2D g2 = image.createGraphics();
+                    selectionTool.paste(g2, e.getX(), e.getY());
+                    g2.dispose();
+                    repaint();
+
+                    return;
+                }
+
                 drawing = true;
             }
 
@@ -70,6 +88,11 @@ public class DrawingPanel extends JPanel {
                     lastY = y;
                     repaint();
                     if (onChange != null) onChange.run();
+                }
+                if (selecting) {
+                    selectionTool.updateSelection(e.getX(), e.getY());
+                    repaint();
+                    return;
                 }
             }
 
@@ -101,6 +124,10 @@ public class DrawingPanel extends JPanel {
                         repaint();
                         if (onChange != null) onChange.run();
                     }
+                }
+                if (selecting) {
+                    selecting = false;
+                    repaint();
                 }
                 drawing = false;
             }
@@ -189,6 +216,12 @@ public class DrawingPanel extends JPanel {
         if (onChange != null) onChange.run();
     }
 
+    public void copySelection() {
+        if (image != null) {
+            selectionTool.copy(image);
+        }
+    }
+
     public void clearCanvas() {
         if (image == null) {
             resizeCanvas(800, 600);
@@ -209,6 +242,12 @@ public class DrawingPanel extends JPanel {
         super.paintComponent(g);
         if (image != null) {
             g.drawImage(image, 0, 0, this);
+        }
+        if (selectionTool.getSelection() != null) {
+            g.setColor(Color.BLUE);
+            ((Graphics2D) g).setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3}, 0));
+            Rectangle sel = selectionTool.getSelection();
+            g.drawRect(sel.x, sel.y, sel.width, sel.height);
         }
     }
 

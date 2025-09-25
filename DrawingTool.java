@@ -4,5 +4,8 @@ public enum DrawingTool {
     SHAPE,
     DRAW,
     ERASER,
-    TEXT
+    TEXT,
+    SELECT,
+    COPY,
+    PASTE
 }

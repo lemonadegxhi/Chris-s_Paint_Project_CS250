@@ -42,6 +42,9 @@ public class PaintApp {
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu("File");
         JMenuItem openItem = new JMenuItem("Open Image");
+        JMenuItem selectItem = new JMenuItem("Select");
+        JMenuItem copyItem = new JMenuItem("Copy");
+        JMenuItem pasteItem = new JMenuItem("Paste");
         JMenuItem saveItem = new JMenuItem("Save");
         saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
         saveItem.addActionListener(e -> saveImage(false));
@@ -49,6 +52,13 @@ public class PaintApp {
         saveAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
         saveAsItem.addActionListener(e -> saveImage(true));
         JMenuItem closeItem = new JMenuItem("Close");
+
+
+    selectItem.addActionListener(e -> drawingPanel.setTool(DrawingTool.SELECT));
+    copyItem.addActionListener(e -> {
+        drawingPanel.copySelection();
+    });
+    pasteItem.addActionListener(e -> drawingPanel.setTool(DrawingTool.PASTE));
 
     openItem.addActionListener(e -> openImage());
     saveItem.addActionListener(e -> saveImage(false));
@@ -62,6 +72,11 @@ public class PaintApp {
 
         fileMenu.addSeparator();
         fileMenu.add(closeItem);
+
+        fileMenu.addSeparator();
+        fileMenu.add(selectItem);
+        fileMenu.add(copyItem);
+        fileMenu.add(pasteItem);
 
         menuBar.add(fileMenu);
         frame.setJMenuBar(menuBar);
@@ -249,6 +264,16 @@ public class PaintApp {
         menuBar.add(helpMenu);
         frame.setJMenuBar(menuBar);
 
+        new javax.swing.Timer(120_000, e -> {
+            if (drawingPanel.getImage() != null) {
+                if (currentFile != null) {
+                    saveImage(false);
+                } else {
+                    saveImage(true);
+                }
+            }
+        }).start();
+
     }
 
     private void attemptExit() {
@@ -359,6 +384,8 @@ public class PaintApp {
         aboutDialog.setLocationRelativeTo(frame);
         aboutDialog.setVisible(true);
     }
+
+
 
     public void showApp() {
         frame.setVisible(true);

@@ -36,6 +36,14 @@ public class AdvancedShapeDrawer {
                 }
                 break;
 
+            case KITE:
+                int centerX = (x1 + x2) / 2;
+                int centerY = (y1 + y2) / 2;
+                int[] xK = {centerX, x1, centerX, x2};
+                int[] yK = {y1, centerY, y2, centerY};
+                g2.drawPolygon(xK, yK, 4);
+                break;
+
             default:
                 ShapeDrawer.drawShape(g2, type, x1, y1, x2, y2);
                 break;

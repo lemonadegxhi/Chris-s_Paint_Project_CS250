@@ -5,5 +5,6 @@ public enum ShapeType {
     ELLIPSE,
     TRIANGLE,
     RIGHT_TRIANGLE,
-    POLYGON
+    POLYGON,
+    KITE
 }
