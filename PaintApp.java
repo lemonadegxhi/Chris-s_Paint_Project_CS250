@@ -14,10 +14,16 @@ import javax.imageio.ImageIO;
 
 public class PaintApp {
     private JFrame frame;
-    private DrawingPanel drawingPanel;
+
+    private JTabbedPane tabbedPane;
+
+    //private DrawingPanel drawingPanel;
     private BufferedImage currentImage;
     private File currentFile;
     private boolean isDirty = false; //looking for unsaved changes.
+
+    private Timer autoSaveTimer;
+    private boolean autoSaveEnabled = true;
 
     /**
      * Construcs the PaintApp and initializes the window, menus, and tools.
@@ -34,13 +40,18 @@ public class PaintApp {
             }
         });
 
-        drawingPanel = new DrawingPanel(() -> setDirty(true));
-        JScrollPane scrollPane = new JScrollPane(drawingPanel);
-        frame.add(scrollPane, BorderLayout.CENTER);
+        tabbedPane = new JTabbedPane();
+        frame.add(tabbedPane, BorderLayout.CENTER);
+        addNewTab();
+
 
         //MENU RIGHT HEREEEEEEEE
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu("File");
+
+        JMenuItem newTabItem = new JMenuItem("New Tab");
+        newTabItem.addActionListener(e -> addNewTab());
+
         JMenuItem openItem = new JMenuItem("Open Image");
         JMenuItem selectItem = new JMenuItem("Select");
         JMenuItem copyItem = new JMenuItem("Copy");
@@ -53,18 +64,29 @@ public class PaintApp {
         saveAsItem.addActionListener(e -> saveImage(true));
         JMenuItem closeItem = new JMenuItem("Close");
 
+        JCheckBoxMenuItem autoSaveToggle = new JCheckBoxMenuItem("Enable Autosave", true);
 
-    selectItem.addActionListener(e -> drawingPanel.setTool(DrawingTool.SELECT));
+        autoSaveToggle.addActionListener(e -> {
+            autoSaveEnabled = autoSaveToggle.isSelected();
+            if (autoSaveEnabled) {
+                autoSaveTimer.start();
+            } else {
+                autoSaveTimer.stop();
+            }
+        });
+
+    selectItem.addActionListener(e -> getCurrentPanel().setTool(DrawingTool.SELECT));
     copyItem.addActionListener(e -> {
-        drawingPanel.copySelection();
+        getCurrentPanel().copySelection();
     });
-    pasteItem.addActionListener(e -> drawingPanel.setTool(DrawingTool.PASTE));
+    pasteItem.addActionListener(e -> getCurrentPanel().setTool(DrawingTool.PASTE));
 
     openItem.addActionListener(e -> openImage());
     saveItem.addActionListener(e -> saveImage(false));
     saveAsItem.addActionListener(e -> saveImage(true));
     closeItem.addActionListener(e -> frame.dispose());
 
+        fileMenu.add(newTabItem);
         fileMenu.add(openItem);
 
         fileMenu.add(saveItem);
@@ -77,6 +99,9 @@ public class PaintApp {
         fileMenu.add(selectItem);
         fileMenu.add(copyItem);
         fileMenu.add(pasteItem);
+
+        fileMenu.addSeparator();
+        fileMenu.add(autoSaveToggle);
 
         menuBar.add(fileMenu);
         frame.setJMenuBar(menuBar);
@@ -95,11 +120,11 @@ public class PaintApp {
         redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK));
 
         undoItem.addActionListener(e -> {
-            drawingPanel.undo();
+            getCurrentPanel().undo();
         });
 
         redoItem.addActionListener(e -> {
-            drawingPanel.redo();
+            getCurrentPanel().redo();
         });
 
         clearCanvasItem.addActionListener(e -> {
@@ -109,14 +134,14 @@ public class PaintApp {
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.WARNING_MESSAGE);
             if (choice == JOptionPane.YES_OPTION) {
-                drawingPanel.clearCanvas();
+                getCurrentPanel().clearCanvas();
                 setDirty(true);
             }
         });
 
         textItem.addActionListener(e -> {
             JPanel p = new JPanel(new BorderLayout(5, 5));
-            JTextField textField = new JTextField(drawingPanel != null ? "" : "");
+            JTextField textField = new JTextField(getCurrentPanel() != null ? "" : "");
             JPanel inner = new JPanel(new GridLayout(2, 2, 4, 4));
             inner.add(new JLabel("Text:"));
             inner.add(textField);
@@ -134,9 +159,9 @@ public class PaintApp {
                 if (text == null || text.trim().isEmpty()) {
                     JOptionPane.showMessageDialog(frame, "No text entered.");
                 } else {
-                    drawingPanel.setTool(DrawingTool.TEXT);
-                    drawingPanel.getToolOptions().setText(text);
-                    drawingPanel.getToolOptions().setTextSize(size);
+                    getCurrentPanel().setTool(DrawingTool.TEXT);
+                    getCurrentPanel().getToolOptions().setText(text);
+                    getCurrentPanel().getToolOptions().setTextSize(size);
                 }
             }
         });
@@ -144,7 +169,7 @@ public class PaintApp {
         colorItem.addActionListener(e -> {
             Color newColor = JColorChooser.showDialog(frame, "Pick Line", Color.RED);
             if (newColor != null) {
-                drawingPanel.setBrushColor(newColor);
+                getCurrentPanel().setBrushColor(newColor);
             }
         });
 
@@ -162,7 +187,7 @@ public class PaintApp {
                 try {
                     int w = Integer.parseInt(widthField.getText());
                     int h = Integer.parseInt(heightField.getText());
-                    drawingPanel.resizeCanvas(w, h);
+                    getCurrentPanel().resizeCanvas(w, h);
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(frame, "Invalid size input!");
                 }
@@ -177,10 +202,10 @@ public class PaintApp {
 
         sizeItem.addChangeListener(e -> {
             int size = sizeItem.getValue();
-            drawingPanel.setBrushSize(size);
+            getCurrentPanel().setBrushSize(size);
         });
 
-        drawingPanel.setBrushSize(sizeItem.getValue());
+        getCurrentPanel().setBrushSize(sizeItem.getValue());
 
         JPanel sliderPanel = new JPanel();
         sliderPanel.add(new JLabel("Line Width:"));
@@ -195,29 +220,29 @@ public class PaintApp {
         for (ShapeType type : ShapeType.values()) {
             JMenuItem shapeItem = new JMenuItem(type.name());
             shapeItem.addActionListener(e -> {
-                drawingPanel.setTool(DrawingTool.SHAPE);
-                drawingPanel.setShapeType(type);
+                getCurrentPanel().setTool(DrawingTool.SHAPE);
+                getCurrentPanel().setShapeType(type);
                 if (type == ShapeType.POLYGON) {
                     int sides = PolygonShape.askSides();
-                    drawingPanel.getToolOptions().setPolygonSides(sides);
+                    getCurrentPanel().getToolOptions().setPolygonSides(sides);
                 }
-                drawingPanel.setTool(DrawingTool.SHAPE);
-                drawingPanel.setShapeType(type);
+                getCurrentPanel().setTool(DrawingTool.SHAPE);
+                getCurrentPanel().setShapeType(type);
             });
             shapeMenu.add(shapeItem);
         }
 
         JMenuItem eyedropperItem = new JMenuItem("Eyedropper");
-        eyedropperItem.addActionListener(e -> drawingPanel.setTool(DrawingTool.EYEDROPPER));
+        eyedropperItem.addActionListener(e -> getCurrentPanel().setTool(DrawingTool.EYEDROPPER));
 
         JCheckBoxMenuItem dashedItem = new JCheckBoxMenuItem("Dashed Line");
-        dashedItem.addActionListener(e -> drawingPanel.setDashed(dashedItem.isSelected()));
+        dashedItem.addActionListener(e -> getCurrentPanel().setDashed(dashedItem.isSelected()));
 
         JMenuItem drawItem = new JMenuItem("Draw");
-        drawItem.addActionListener(e -> drawingPanel.setTool(DrawingTool.DRAW));
+        drawItem.addActionListener(e -> getCurrentPanel().setTool(DrawingTool.DRAW));
 
         JMenuItem eraserItem = new JMenuItem("Eraser");
-        eraserItem.addActionListener(e -> drawingPanel.setTool(DrawingTool.ERASER));
+        eraserItem.addActionListener(e -> getCurrentPanel().setTool(DrawingTool.ERASER));
 
 
         toolMenu.add(colorItem);
@@ -264,16 +289,31 @@ public class PaintApp {
         menuBar.add(helpMenu);
         frame.setJMenuBar(menuBar);
 
-        new javax.swing.Timer(120_000, e -> {
-            if (drawingPanel.getImage() != null) {
-                if (currentFile != null) {
-                    saveImage(false);
-                } else {
-                    saveImage(true);
+        autoSaveTimer = new javax.swing.Timer(120_000, e -> {
+            if (autoSaveEnabled) {
+                DrawingPanel panel = getCurrentPanel();
+                if (panel.getImage() != null) {
+                    if (currentFile != null) {
+                        saveImage(false);
+                    } else {
+                        saveImage(true);
+                    }
                 }
             }
-        }).start();
+        });
+        autoSaveTimer.start();
+    }
 
+    private void addNewTab() {
+        DrawingPanel drawingPanel = new DrawingPanel(() -> setDirty(true));
+        JScrollPane scrollPane = new JScrollPane(drawingPanel);
+        tabbedPane.addTab("Canvas " + (tabbedPane.getTabCount() + 1), scrollPane);
+        tabbedPane.setSelectedComponent(scrollPane);
+    }
+
+    private DrawingPanel getCurrentPanel() {
+        JScrollPane scroll = (JScrollPane) tabbedPane.getSelectedComponent();
+        return (DrawingPanel) scroll.getViewport().getView();
     }
 
     private void attemptExit() {
@@ -308,7 +348,7 @@ public class PaintApp {
                 currentImage = ImageIO.read(currentFile); //loading it into the memory here
 
                 if (currentImage != null) {
-                    drawingPanel.setImage(currentImage);
+                    getCurrentPanel().setImage(currentImage);
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(frame, "Failed to Open Image: " + ex.getMessage());
@@ -318,6 +358,7 @@ public class PaintApp {
 
     //THIS ABOUT KILLED ME, GAHHHHHHHHHHHHHh
     private void saveImage(boolean saveAs) {
+        DrawingPanel drawingPanel = getCurrentPanel();
         if (drawingPanel.getImage() == null) {
             JOptionPane.showMessageDialog(frame, "Nothing to save!");
             return;
@@ -365,7 +406,7 @@ public class PaintApp {
 
         JTextArea textArea = new JTextArea(
                 "Chris' Magical Paint\n\n" +
-                        "Version: 1.3.5\n" +
+                        "Version: 1.4.4\n" +
                         "Author: Lemonadegxhi\n" +
                         "Recreation of Microsoft Pain.");
         textArea.setEditable(false);
