@@ -4,6 +4,10 @@ import java.awt.image.BufferedImage;
 import java.awt.event.*;
 import java.io.File;
 import javax.imageio.ImageIO;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Main Application class
@@ -24,6 +28,7 @@ public class PaintApp {
 
     private Timer autoSaveTimer;
     private boolean autoSaveEnabled = true;
+    private PaintWebServer webServer = new PaintWebServer();
 
     /**
      * Construcs the PaintApp and initializes the window, menus, and tools.
@@ -263,6 +268,8 @@ public class PaintApp {
 
 
 
+
+
         //Adding a help menu
         JMenu helpMenu = new JMenu("Help");
         JMenuItem helpItem = new JMenuItem("Help");
@@ -287,6 +294,51 @@ public class PaintApp {
 
         menuBar.add(toolMenu);
         menuBar.add(helpMenu);
+
+        //Web Menu
+
+        JMenu webMenu = new JMenu("Web");
+        JMenuItem startWebItem = new JMenuItem("Start Web Server");
+        JMenuItem stopWebItem = new JMenuItem("Stop Web Server");
+        JMenuItem selectTabsItem = new JMenuItem("Select Tabs to Share");
+
+        startWebItem.addActionListener(e -> {
+            try {
+                webServer.start(8000);
+                updateWebShares();
+                JOptionPane.showMessageDialog(frame, "Web server started at http://localhost:8000/");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(frame, "Failed to start web server: " + ex.getMessage());
+            }
+        });
+
+        stopWebItem.addActionListener(e -> {
+            webServer.stop();
+            JOptionPane.showMessageDialog(frame, "Web server stopped.");
+        });
+
+        selectTabsItem.addActionListener(e -> {
+            int count = tabbedPane.getTabCount();
+            JCheckBox[] boxes = new JCheckBox[count];
+            JPanel panel = new JPanel(new GridLayout(count, 1));
+            for (int i = 0; i < count; i++) {
+                boxes[i] = new JCheckBox(tabbedPane.getTitleAt(i), true);
+                panel.add(boxes[i]);
+            }
+            int res = JOptionPane.showConfirmDialog(frame, panel, "Select Tabs to Share", JOptionPane.OK_CANCEL_OPTION);
+            if (res == JOptionPane.OK_OPTION) {
+                updateWebShares(Arrays.asList(boxes));
+            }
+        });
+
+        webMenu.add(startWebItem);
+        webMenu.add(stopWebItem);
+        webMenu.add(selectTabsItem);
+        menuBar.add(webMenu);
+
+
+
+
         frame.setJMenuBar(menuBar);
 
         autoSaveTimer = new javax.swing.Timer(120_000, e -> {
@@ -302,6 +354,31 @@ public class PaintApp {
             }
         });
         autoSaveTimer.start();
+    }
+
+    private void updateWebShares() {
+        Map<String, BufferedImage> map = new HashMap<>();
+        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+            JScrollPane scroll = (JScrollPane) tabbedPane.getComponentAt(i);
+            DrawingPanel panel = (DrawingPanel) scroll.getViewport().getView();
+            if (panel.getImage() != null) {
+                map.put("canvas" + (i + 1), panel.getImage());
+            }
+        }
+        webServer.updateSharedImages(map);
+    }
+    private void updateWebShares(java.util.List<JCheckBox> boxes) {
+        Map<String, BufferedImage> map = new HashMap<>();
+        for (int i = 0; i < boxes.size(); i++) {
+            if (boxes.get(i).isSelected()) {
+                JScrollPane scroll = (JScrollPane) tabbedPane.getComponentAt(i);
+                DrawingPanel panel = (DrawingPanel) scroll.getViewport().getView();
+                if (panel.getImage() != null) {
+                    map.put("canvas" + (i + 1), panel.getImage());
+                }
+            }
+        }
+        webServer.updateSharedImages(map);
     }
 
     private void addNewTab() {
@@ -406,7 +483,7 @@ public class PaintApp {
 
         JTextArea textArea = new JTextArea(
                 "Chris' Magical Paint\n\n" +
-                        "Version: 1.4.4\n" +
+                        "Version: 1.4.6\n" +
                         "Author: Lemonadegxhi\n" +
                         "Recreation of Microsoft Pain.");
         textArea.setEditable(false);
