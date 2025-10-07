@@ -44,10 +44,35 @@ public class AdvancedShapeDrawer {
                 g2.drawPolygon(xK, yK, 4);
                 break;
 
+            case STAR:
+                int points = Math.max(4, polygonSides);
+                drawStar(g2, x1, y1, x2, y2, points);
+                break;
+
             default:
                 ShapeDrawer.drawShape(g2, type, x1, y1, x2, y2);
                 break;
 
         }
+    }
+
+    private static void drawStar(Graphics2D g2, int x1, int y1, int x2, int y2, int points) {
+        int centerX = (x1 + x2) / 2;
+        int centerY = (y1 + y2) / 2;
+        int outerRadius = Math.min(Math.abs(x2 - x1), Math.abs(y2 - y1)) /2;
+        int innerRadius = Math.max(1, outerRadius / 2);
+
+        double angleStep = Math.PI / points;
+        int total = points * 2;
+        int[] xs = new int [total];
+        int[] ys = new int[total];
+        double angle = -Math.PI / 2;
+        for (int i = 0; i < total; i++) {
+            int r = (i % 2 == 0) ? outerRadius : innerRadius;
+            xs[i] = centerX + (int) (r * Math.cos(angle));
+            ys[i] = centerY + (int) (r * Math.sin(angle));
+            angle += angleStep;
+        }
+        g2.drawPolygon(xs, ys, total);
     }
 }

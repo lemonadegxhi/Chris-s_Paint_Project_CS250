@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
+import java.awt.TrayIcon.MessageType;
+import java.awt.geom.AffineTransform;
 
 /**
  * Main Application class
@@ -29,6 +31,8 @@ public class PaintApp {
     private Timer autoSaveTimer;
     private boolean autoSaveEnabled = true;
     private PaintWebServer webServer = new PaintWebServer();
+
+    private TrayIcon trayIcon;
 
     /**
      * Construcs the PaintApp and initializes the window, menus, and tools.
@@ -75,8 +79,10 @@ public class PaintApp {
             autoSaveEnabled = autoSaveToggle.isSelected();
             if (autoSaveEnabled) {
                 autoSaveTimer.start();
+                showNotification("Autosave enabled", "Autosave turned ON", MessageType.INFO);
             } else {
                 autoSaveTimer.stop();
+                showNotification("Autosave disabled", "Autosave turned OFF", MessageType.WARNING);
             }
         });
 
@@ -143,6 +149,8 @@ public class PaintApp {
                 setDirty(true);
             }
         });
+
+
 
         textItem.addActionListener(e -> {
             JPanel p = new JPanel(new BorderLayout(5, 5));
@@ -230,9 +238,10 @@ public class PaintApp {
                 if (type == ShapeType.POLYGON) {
                     int sides = PolygonShape.askSides();
                     getCurrentPanel().getToolOptions().setPolygonSides(sides);
+                } else if (type == ShapeType.STAR) {
+                    int pts = PolygonShape.askSides("Enter number of star points (4+):", "5");
+                    getCurrentPanel().getToolOptions().setPolygonSides(Math.max(4, pts));
                 }
-                getCurrentPanel().setTool(DrawingTool.SHAPE);
-                getCurrentPanel().setShapeType(type);
             });
             shapeMenu.add(shapeItem);
         }
@@ -341,6 +350,133 @@ public class PaintApp {
         menuBar.add(toolMenu);
         menuBar.add(helpMenu);
 
+        frame.setJMenuBar(menuBar);
+
+        // Toolbar (With Icons + Tooltips)
+        JToolBar toolBar = new JToolBar();
+        toolBar.setFloatable(false);
+
+        ImageIcon pencilIcon = createTextIcon("\u270E");
+        ImageIcon eraserIcon = createTextIcon("\u1F58A");
+        ImageIcon selectIcon = createTextIcon("\u25A3");
+        ImageIcon eyeIcon = createTextIcon("\uD83D\uDC41");
+        ImageIcon textIcon = createTextIcon("T");
+        ImageIcon undoIcon = createTextIcon("\u21B6");
+        ImageIcon redoIcon = createTextIcon("\u21B7");
+        ImageIcon rotateIcon = createTextIcon("\u27F3");
+        ImageIcon flipIcon = createTextIcon("\u21C4");
+        ImageIcon saveIcon = createTextIcon("\uD83D\uDCBE");
+        ImageIcon starIcon = createTextIcon("\u2605");
+
+        JButton drawBtn = new JButton(pencilIcon);
+        drawBtn.setToolTipText("Draw (Ctrl + D)");
+        drawBtn.addActionListener(e -> getCurrentPanel().setTool(DrawingTool.DRAW));
+        toolBar.add(drawBtn);
+
+        JButton eraserBtn = new JButton(eraserIcon);
+        eraserBtn.setToolTipText("Eraser (Ctrl + E)");
+        eraserBtn.addActionListener(e -> getCurrentPanel().setTool(DrawingTool.ERASER));
+        toolBar.add(drawBtn);
+
+        JButton selectBtn = new JButton(selectIcon);
+        selectBtn.setToolTipText("Select");
+        selectBtn.addActionListener(e -> getCurrentPanel().setTool(DrawingTool.SELECT));
+        toolBar.add(selectBtn);
+
+        JButton eyeBtn = new JButton(eyeIcon);
+        eyeBtn.setToolTipText("Eyedropper");
+        eyeBtn.addActionListener(e -> getCurrentPanel().setTool(DrawingTool.EYEDROPPER));
+        toolBar.add(eyeBtn);
+
+        JButton textBtn = new JButton(textIcon);
+        textBtn.setToolTipText("Text tool");
+        textBtn.addActionListener(e -> {
+            getCurrentPanel().setTool(DrawingTool.TEXT);
+            JPanel p = new JPanel(new BorderLayout(5, 5));
+            JTextField textField = new JTextField("");
+            JPanel inner = new JPanel(new GridLayout(2,2,4,4));
+            inner.add(new JLabel("Text:"));
+            inner.add(textField);
+            inner.add(new JLabel("Size:"));
+            SpinnerNumberModel model = new SpinnerNumberModel(24, 6, 200, 1);
+            JSpinner sizeSpinner = new JSpinner(model);
+            inner.add(sizeSpinner);
+            p.add(inner, BorderLayout.CENTER);
+            int res = JOptionPane.showConfirmDialog(frame, p, "Insert Text", JOptionPane.OK_CANCEL_OPTION);
+            if (res == JOptionPane.OK_OPTION) {
+                String text = textField.getText();
+                int size = (Integer) sizeSpinner.getValue();
+                getCurrentPanel().getToolOptions().setText(text);
+                getCurrentPanel().getToolOptions().setTextSize(size);
+            }
+        });
+        toolBar.add(textBtn);
+        toolBar.addSeparator();
+
+        JButton undoBtn = new JButton(undoIcon);
+        undoBtn.setToolTipText("Undo (Ctrl + Z)");
+        undoBtn.addActionListener(e -> getCurrentPanel().undo());
+        toolBar.add(undoBtn);
+
+        JButton redoBtn = new JButton(redoIcon);
+        redoBtn.setToolTipText("Redo (Ctrl + Y");
+        redoBtn.addActionListener(e -> getCurrentPanel().redo());
+        toolBar.add(redoBtn);
+
+        toolBar.addSeparator();
+
+        //Rotate/Flip Buttons
+        JButton rot90Btn = new JButton(rotateIcon);
+        rot90Btn.setToolTipText("Rotate 90");
+        rot90Btn.addActionListener(e -> {getCurrentPanel().rotateSelectionOrCanvas(90); setDirty(true); });
+        toolBar.add(rot90Btn);
+
+        JButton flipHBtn = new JButton(flipIcon);
+        flipHBtn.setToolTipText("Flip Horizontal");
+        flipHBtn.addActionListener(e -> { getCurrentPanel().flipSelectionOrCanvas(true); setDirty(true); });
+        toolBar.add(flipHBtn);
+
+        JButton flipVBtn = new JButton(flipIcon);
+        flipVBtn.setToolTipText("Flip Vertical");
+        flipVBtn.addActionListener(e -> { getCurrentPanel().flipSelectionOrCanvas(false); setDirty(true); });
+        toolBar.add(flipVBtn);
+
+        toolBar.addSeparator();
+
+        JButton saveBtn = new JButton(saveIcon);
+        saveBtn.setToolTipText("Save (Ctrl+S)");
+        saveBtn.addActionListener(e -> saveImage(false));
+        toolBar.add(saveBtn);
+
+        //Star / Polygon quick Access
+        JButton starBtn = new JButton(starIcon);
+        starBtn.setToolTipText("Star Shape (choose points)");
+        starBtn.addActionListener(e -> {
+            int pts = PolygonShape.askSides("Enter number of star points (4+):", "5");
+            getCurrentPanel().setTool(DrawingTool.SHAPE);
+            getCurrentPanel().setShapeType(ShapeType.STAR);
+            getCurrentPanel().getToolOptions().setPolygonSides(Math.max(4, pts));
+        });
+        toolBar.add(starBtn);
+        frame.add(toolBar, BorderLayout.NORTH);
+
+        InputMap im = frame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = frame.getRootPane().getActionMap();
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK), "save");
+        am.put("save", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) { saveImage(false);}
+        });
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK, false), "undo");
+        am.put("undo", new AbstractAction(){ public void actionPerformed(ActionEvent e){ getCurrentPanel().undo(); }});
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK), "redo");
+        am.put("redo", new AbstractAction(){ public void actionPerformed(ActionEvent e){ getCurrentPanel().redo(); }});
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK), "eraser");
+        am.put("eraser", new AbstractAction(){ public void actionPerformed(ActionEvent e){ getCurrentPanel().setTool(DrawingTool.ERASER); }});
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK), "draw");
+        am.put("draw", new AbstractAction(){ public void actionPerformed(ActionEvent e){ getCurrentPanel().setTool(DrawingTool.DRAW); }});
+
+        initSystemTray();
+
         //Web Menu
 
         JMenu webMenu = new JMenu("Web");
@@ -400,6 +536,45 @@ public class PaintApp {
             }
         });
         autoSaveTimer.start();
+    }
+
+    private ImageIcon createTextIcon(String txt) {
+        int size = 20;
+        BufferedImage bi = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = bi.createGraphics();
+        g.setFont(new Font("Dialog", Font.PLAIN, 16));
+        g.setColor(Color.BLACK);
+        FontMetrics fm = g.getFontMetrics();
+        int w = fm.stringWidth(txt);
+        int h = fm.getAscent();
+        g.drawString(txt, Math.max(0, (size - w) / 2), Math.max(h, (size + h) / 2) - 4);
+        g.dispose();
+        return new ImageIcon(bi);
+    }
+
+    private void initSystemTray() {
+        if (!SystemTray.isSupported()) return;
+        try {
+            SystemTray tray = SystemTray.getSystemTray();
+            BufferedImage icon = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = icon.createGraphics();
+            g.setColor(Color.BLUE);
+            g.fillOval(0, 0, 16, 16);
+            g.setColor(Color.WHITE);
+            g.drawString("P", 4, 12);
+            g.dispose();
+            trayIcon = new TrayIcon(icon, "Chris' magical Paint");
+            trayIcon.setImageAutoSize(true);
+            tray.add(trayIcon);
+        } catch (Exception ex) {
+            trayIcon = null;
+        }
+    }
+
+    private void showNotification(String title, String msg, MessageType type) {
+        if (trayIcon != null) {
+            try { trayIcon.displayMessage(title, msg, type); } catch (Exception ignore) {}
+        }
     }
 
     private void updateWebShares() {
@@ -529,7 +704,7 @@ public class PaintApp {
 
         JTextArea textArea = new JTextArea(
                 "Chris' Magical Paint\n\n" +
-                        "Version: 1.5.1\n" +
+                        "Version: 1.5.2\n" +
                         "Author: Lemonadegxhi\n" +
                         "Recreation of Microsoft Pain.");
         textArea.setEditable(false);
