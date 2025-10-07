@@ -2,8 +2,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Stack;
 
 public class DrawingPanel extends JPanel {
     private BufferedImage image;
@@ -28,6 +31,17 @@ public class DrawingPanel extends JPanel {
 
     public ToolOptions getToolOptions() {
         return this.toolOptions;
+    }
+
+
+
+    private void pushStack() {
+        BufferedImage snapshot = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = snapshot.createGraphics();
+        g2.drawImage(image, 0, 0, null);
+        g2.dispose();
+        undoStack.push(snapshot);
+        redoStack.clear();
     }
 
     public DrawingPanel(Runnable onChange) {
@@ -313,5 +327,134 @@ public class DrawingPanel extends JPanel {
         g.drawImage(src, 0, 0, null);
         g.dispose();
         return copy;
+    }
+
+    public void rotateSelectionOrCanvas(int degrees) {
+        if (image == null) return;
+        Rectangle sel = selectionTool.getSelection();
+        if (sel != null && sel.width > 0 && sel.height > 0) {
+            pushStateForUndo();
+            redoStack.clear();
+
+            BufferedImage chunk = image.getSubimage(
+                    Math.max(0, sel.x),
+                    Math.max(0, sel.y),
+                    Math.min(sel.width, image.getWidth() - sel.x),
+                    Math.min(sel.height, image.getHeight() - sel.y)
+            );
+            BufferedImage rotated = rotateImage(chunk, degrees);
+
+            //Draw rotated into the selection rectangle, scaling if necessary to fit bounds.
+            Graphics2D g2 = image.createGraphics();
+            g2.setComposite(AlphaComposite.SrcOver);
+            g2.drawImage(rotated, sel.x, sel.y, sel.width, sel.height, null);
+            g2.dispose();
+            repaint();
+            if (onChange != null) onChange.run();
+        } else {
+            pushStateForUndo();
+            redoStack.clear();
+
+            BufferedImage rotated = rotateImage(image, degrees);
+            image = rotated;
+            revalidate();
+            repaint();
+            if (onChange != null) onChange.run();
+        }
+    }
+
+    /**
+     * Flip either the selection (if one exists) or the whole canvas.
+     * @param horizontal true => horizontal flip (left <-> right), false => vertical flip (top <-> bottom)
+     */
+    public void flipSelectionOrCanvas(boolean horizontal) {
+        if (image == null) return;
+        Rectangle sel = selectionTool.getSelection();
+        if (sel != null && sel.width > 0 && sel.height > 0) {
+            pushStateForUndo();
+            redoStack.clear();
+
+            BufferedImage chunk = image.getSubimage(
+                    Math.max(0, sel.x),
+                    Math.max(0, sel.y),
+                    Math.min(sel.width, image.getWidth() - sel.x),
+                    Math.min(sel.height, image.getHeight() - sel.y)
+            );
+            BufferedImage flipped = flipImage(chunk, horizontal);
+
+            Graphics2D g2 = image.createGraphics();
+            g2.setComposite(AlphaComposite.SrcOver);
+            g2.drawImage(flipped, sel.x, sel.y, sel.width, sel.height, null);
+            g2.dispose();
+            repaint();
+            if (onChange != null) onChange.run();
+        } else {
+            pushStateForUndo();
+            redoStack.clear();
+
+            BufferedImage flipped = flipImage(image, horizontal);
+            image = flipped;
+            revalidate();
+            repaint();
+            if (onChange != null) onChange.run();
+        }
+    }
+
+    private BufferedImage rotateImage(BufferedImage src, int degrees) {
+        if (degrees % 360 == 0) return copyImage(src);
+
+        double radians = Math.toRadians(degrees);
+        int srcW = src.getWidth();
+        int srcH = src.getHeight();
+
+        int destW = srcW;
+        int destH = srcH;
+        if (degrees % 180 != 0) {
+            destW = srcH;
+            destH = srcW;
+        }
+
+        BufferedImage result = new BufferedImage(destW, destH, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = result.createGraphics();
+
+        AffineTransform at = new AffineTransform();
+
+        //Translate & rotate so that the image is centerede correctly
+        if (degrees == 90) {
+            at.translate(destW, 0);
+            at.rotate(radians);
+        } else if (degrees == 180) {
+            at.translate(destW, destH);
+            at.rotate(radians);
+        } else if (degrees == 270) {
+            at.translate(0, destH);
+            at.rotate(radians);
+        }  else {
+            at.rotate(radians, srcW / 2.0, srcH / 2.0);
+        }
+
+        g2.setTransform(at);
+        g2.drawImage(src, 0, 0, null);
+        g2.dispose();
+        return result;
+    }
+
+    private BufferedImage flipImage(BufferedImage src, boolean horizontal) {
+        int w = src.getWidth();
+        int h = src.getHeight();
+
+        AffineTransform at = new AffineTransform();
+        if (horizontal) {
+            at.scale(-1.0, 1.0);
+            at.translate(-w, 0);
+        } else {
+            at.scale(1.0, -1.0);
+            at.translate(0, -h);
+        }
+        BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = result.createGraphics();
+        g2.drawImage(src, at, null);
+        g2.dispose();
+        return result;
     }
 }

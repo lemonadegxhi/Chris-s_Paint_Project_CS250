@@ -249,6 +249,52 @@ public class PaintApp {
         JMenuItem eraserItem = new JMenuItem("Eraser");
         eraserItem.addActionListener(e -> getCurrentPanel().setTool(DrawingTool.ERASER));
 
+        JMenu transformMenu = new JMenu("Transform");
+
+        JMenu rotateMenu = new JMenu("Rotate");
+        JMenuItem rot90 = new JMenuItem("Rotate 90");
+        JMenuItem rot180 = new JMenuItem("Rotate 180");
+        JMenuItem rot270 = new JMenuItem("Rotate 270");
+
+        rot90.addActionListener(e -> {
+            DrawingPanel p = getCurrentPanel();
+            p.rotateSelectionOrCanvas(90);
+            setDirty(true);
+        });
+        rot180.addActionListener(e -> {
+            DrawingPanel p = getCurrentPanel();
+            p.rotateSelectionOrCanvas(180);
+            setDirty(true);
+        });
+        rot270.addActionListener(e -> {
+            DrawingPanel p = getCurrentPanel();
+            p.rotateSelectionOrCanvas(270);
+            setDirty(true);
+        });
+        rotateMenu.add(rot90);
+        rotateMenu.add(rot180);
+        rotateMenu.add(rot270);
+
+        JMenuItem flipH = new JMenuItem("Flip Horizontal");
+        JMenuItem flipV = new JMenuItem("Flip Vertical");
+
+        flipH.addActionListener(e -> {
+            DrawingPanel p = getCurrentPanel();
+            p.flipSelectionOrCanvas(true);
+            setDirty(true);
+        });
+        flipV.addActionListener(e -> {
+            DrawingPanel p = getCurrentPanel();
+            p.flipSelectionOrCanvas(false);
+            setDirty(true);
+        });
+
+        transformMenu.add(rotateMenu);
+        transformMenu.addSeparator();
+        transformMenu.add(flipH);
+        transformMenu.add(flipV);
+
+        toolMenu.add(transformMenu);
 
         toolMenu.add(colorItem);
         toolMenu.add(eyedropperItem);
@@ -483,7 +529,7 @@ public class PaintApp {
 
         JTextArea textArea = new JTextArea(
                 "Chris' Magical Paint\n\n" +
-                        "Version: 1.4.6\n" +
+                        "Version: 1.5.1\n" +
                         "Author: Lemonadegxhi\n" +
                         "Recreation of Microsoft Pain.");
         textArea.setEditable(false);
